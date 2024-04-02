@@ -54,4 +54,8 @@ If the code assistant is unable to answer the question, it will return an error 
   "error": "Usage: bin/console app:email:parser <path_to_email_file>"
 }
 ```
+## The tradeparser assistant is 100% covered by tests.
+
+Look at tradeparser/htmlReport/index.html for more details
+
 ## Merci ;)
