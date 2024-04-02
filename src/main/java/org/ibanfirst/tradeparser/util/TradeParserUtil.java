@@ -2,19 +2,36 @@ package org.ibanfirst.tradeparser.util;
 
 import org.ibanfirst.tradeparser.exception.TradeParserException;
 import org.ibanfirst.tradeparser.model.TradeConfirmation;
+import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Utility class for parsing trade confirmation data from email content.
+ */
 public class TradeParserUtil {
 
-    public static TradeConfirmation extractFromEmailContent(String emailContent) throws Exception {
+    /**
+     * Regular expression pattern for extracting the rate from the email content.
+     */
+    private static final String RATE_PATTERN = "RATE: ([\\d,\\.]+)";
+
+    /**
+     * Extracts trade confirmation data from the email content.
+     *
+     * @param emailContent the email content
+     * @return the trade confirmation
+     * @throws TradeParserException if an error occurs while parsing the trade confirmation data
+     */
+    public static TradeConfirmation extractFromEmailContent(String emailContent) throws TradeParserException {
         try {
             String reference = extractField("OUR REF : (\\d+)", emailContent);
-            Date tradeDate = extractDate("DD: (\\d{2}/\\d{2}/\\d{4})", emailContent);
+            Date tradeDate = extractDate("FOREX Deal - (\\d{2}/\\d{2}/\\d{4})", emailContent);
             String[] sellData = extractCurrencyAmount("WE SELL: (\\w+) ([\\d,\\.]+)", emailContent);
             String[] buyData = extractCurrencyAmount("WE BUY: (\\w+) ([\\d,\\.]+)", emailContent);
             float rate = extractRate(emailContent);
@@ -30,6 +47,14 @@ public class TradeParserUtil {
         }
     }
 
+    /**
+     * Extracts a field from the email content using the given regular expression pattern.
+     *
+     * @param pattern      the regular expression pattern
+     * @param emailContent the email content
+     * @return the field value
+     * @throws ParseException if the field cannot be extracted
+     */
     private static String extractField(String pattern, String emailContent) throws ParseException {
         Matcher matcher = Pattern.compile(pattern).matcher(emailContent);
         if (matcher.find()) {
@@ -39,12 +64,29 @@ public class TradeParserUtil {
         }
     }
 
+    /**
+     * Extracts a date from the email content using the given date format pattern.
+     *
+     * @param pattern      the date format pattern
+     * @param emailContent the email content
+     * @return the date value
+     * @throws ParseException if the date cannot be extracted
+     */
     private static Date extractDate(String pattern, String emailContent) throws ParseException {
         String dateStr = extractField(pattern, emailContent);
-        SimpleDateFormat sdf = new SimpleDateFormat("git init");
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+
         return sdf.parse(dateStr);
     }
 
+    /**
+     * Extracts the currency and amount from the email content using the given regular expression pattern.
+     *
+     * @param pattern      the regular expression pattern
+     * @param emailContent the email content
+     * @return an array containing the currency and amount
+     */
     private static String[] extractCurrencyAmount(String pattern, String emailContent) {
         Pattern currencyAmountPattern = Pattern.compile(pattern);
         Matcher matcher = currencyAmountPattern.matcher(emailContent);
@@ -56,8 +98,12 @@ public class TradeParserUtil {
         return result;
     }
 
-    private static final String RATE_PATTERN = "RATE: ([\\d,\\.]+)";
-
+    /**
+     * Extracts the rate from the email content using the RATE_PATTERN regular expression pattern.
+     *
+     * @param emailContent the email content
+     * @return the rate
+     */
     static float extractRate(String emailContent) {
         Pattern ratePattern = Pattern.compile(RATE_PATTERN);
         Matcher matcher = ratePattern.matcher(emailContent);
@@ -68,4 +114,3 @@ public class TradeParserUtil {
     }
 
 }
-
